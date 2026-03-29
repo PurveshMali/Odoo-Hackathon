@@ -1,13 +1,18 @@
 require('dotenv').config();
 
 const express      = require('express');
+const path         = require('path');
 const helmet       = require('helmet');
 const cors         = require('cors');
 const cookieParser = require('cookie-parser');
 
-const { sendError } = require('./utils/apiResponse');
-const authRoutes    = require('./modules/auth/auth.routes');
-const usersRoutes   = require('./modules/users/users.routes');
+const { sendError }      = require('./utils/apiResponse');
+const authRoutes         = require('./modules/auth/auth.routes');
+const usersRoutes        = require('./modules/users/users.routes');
+const expensesRoutes     = require('./modules/expenses/expenses.routes');
+const approvalRulesRoutes = require('./modules/approval-rules/approvalRules.routes');
+const approvalsRoutes    = require('./modules/approvals/approvals.routes');
+const dashboardRoutes    = require('./modules/dashboard/dashboard.routes');
 
 const app = express();
 
@@ -31,6 +36,9 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Serve uploaded receipt files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 /* ─────────────────────────────────────────────────────────
    Health check — useful for deployment probes
 ───────────────────────────────────────────────────────── */
@@ -41,8 +49,12 @@ app.get('/health', (req, res) => {
 /* ─────────────────────────────────────────────────────────
    API routes
 ───────────────────────────────────────────────────────── */
-app.use('/api/auth',  authRoutes);
-app.use('/api/users', usersRoutes);
+app.use('/api/auth',           authRoutes);
+app.use('/api/users',          usersRoutes);
+app.use('/api/expenses',       expensesRoutes);
+app.use('/api/approval-rules', approvalRulesRoutes);
+app.use('/api/approvals',      approvalsRoutes);
+app.use('/api/dashboard',      dashboardRoutes);
 
 /* ─────────────────────────────────────────────────────────
    404 handler
