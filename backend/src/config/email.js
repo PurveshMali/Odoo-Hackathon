@@ -6,6 +6,18 @@ const nodemailer = require('nodemailer');
  * In production:  uses Gmail with app password from env.
  */
 const createTransporter = async () => {
+  // Check if credentials are provided in .env
+  const user = process.env.EMAIL_FROM_ADDRESS;
+  const pass = process.env.EMAIL_APP_PASSWORD;
+
+  if (user && pass) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user, pass },
+    });
+  }
+
+  // Fallback to Ethereal if no Gmail credentials provided (dev-only)
   if (process.env.NODE_ENV !== 'production') {
     const testAccount = await nodemailer.createTestAccount();
     return nodemailer.createTransport({
@@ -16,12 +28,10 @@ const createTransporter = async () => {
     });
   }
 
+  // Production fallback — this will fail at sendMail if no user/pass
   return nodemailer.createTransport({
     service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_FROM_ADDRESS,
-      pass: process.env.EMAIL_APP_PASSWORD,
-    },
+    auth: { user, pass },
   });
 };
 
@@ -99,13 +109,21 @@ If you did not expect this email, contact your administrator.
     `.trim(),
   };
 
-  const info = await transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    const isTest = info.envelope.from === 'test@ethereal.email' || info.messageId.includes('ethereal.email');
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`📧 Credentials Email Preview: ${nodemailer.getTestMessageUrl(info)}`);
+    if (isTest) {
+      console.log(`📧 Credentials Email Preview: ${nodemailer.getTestMessageUrl(info)}`);
+    } else {
+      console.log(`📧 Credentials Email Sent successfully to: ${toEmail} (ID: ${info.messageId})`);
+    }
+
+    return info;
+  } catch (err) {
+    console.error(`❌ [EMAIL] Failed to send credentials email to ${toEmail}:`, err.message);
+    throw err;
   }
-
-  return info;
 };
 
 /**
@@ -139,10 +157,18 @@ const sendPasswordChangedEmail = async ({ toEmail, userName }) => {
     `.trim(),
   };
 
-  const info = await transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    const isTest = info.envelope.from === 'test@ethereal.email' || info.messageId.includes('ethereal.email');
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`📧 Password Changed Email Preview: ${nodemailer.getTestMessageUrl(info)}`);
+    if (isTest) {
+      console.log(`📧 Password Changed Email Preview: ${nodemailer.getTestMessageUrl(info)}`);
+    } else {
+      console.log(`📧 Password Changed Email Sent successfully to: ${toEmail} (ID: ${info.messageId})`);
+    }
+  } catch (err) {
+    console.error(`❌ [EMAIL] Failed to send password-changed email to ${toEmail}:`, err.message);
+    throw err;
   }
 };
 

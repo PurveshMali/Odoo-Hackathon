@@ -444,9 +444,10 @@ async function sendCredentials(targetUserId, adminId, ipAddress) {
 
   if (targetUser.password_sent_at) {
     const lastSentAt    = new Date(targetUser.password_sent_at);
-    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-    if (lastSentAt > twoMinutesAgo) {
-      const err = new Error('Credentials were recently sent. Please wait 2 minutes before sending again.');
+    // Reduced to 10 seconds for easier dev testing
+    const tenSecondsAgo = new Date(Date.now() - 10 * 1000);
+    if (lastSentAt > tenSecondsAgo) {
+      const err = new Error('Credentials were recently sent. Please wait a few seconds before sending again.');
       err.statusCode = 429;
       throw err;
     }
