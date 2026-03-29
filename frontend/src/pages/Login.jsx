@@ -53,28 +53,33 @@ const Login = () => {
       setApiError('');
 
       try {
-        // TODO: replace with real API call
-        // const response = await fetch(`${API_BASE}/api/auth/login`, {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(formData),
-        // });
-        // if (!response.ok) throw new Error('Invalid credentials');
-        // const data = await response.json();
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+          credentials: 'include' // allow receiving the HttpOnly refreshToken
+        });
         
-        // Mock successful login delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        
-        // Mock data
-        const mockData = {
-          token: "mock-jwt-token-12345",
-          user: { name: "Test User", email: formData.email, role: "Employee", currency_code: "USD" }
-        };
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error('Server returned invalid JSON. Is the backend running?');
+        }
 
-        localStorage.setItem('token', mockData.token);
-        localStorage.setItem('user', JSON.stringify(mockData.user));
-        
-        navigate('/dashboard');
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || data.error || 'Invalid credentials');
+        }
+
+        localStorage.setItem('token', data.data.accessToken);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+
+        // If admin flagged this user to change password, redirect there first
+        if (data.data.mustChangePassword) {
+          navigate('/change-password');
+        } else {
+          navigate('/dashboard');
+        }
       } catch (err) {
         setApiError(err.message || 'Invalid credentials');
       } finally {

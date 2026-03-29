@@ -1,4 +1,4 @@
-const { body, validationResult } = require('express-validator');
+const { body, param, validationResult } = require('express-validator');
 const { sendError } = require('../utils/apiResponse');
 
 /**
@@ -63,4 +63,30 @@ const loginValidators = [
   handleValidationErrors,
 ];
 
-module.exports = { signupValidators, loginValidators };
+/* ────────────── Change-password validators ────────────── */
+const changePasswordValidators = [
+  body('currentPassword')
+    .trim()
+    .notEmpty().withMessage('Current password is required.'),
+
+  body('newPassword')
+    .notEmpty().withMessage('New password is required.')
+    .isLength({ min: 8 }).withMessage('New password must be at least 8 characters.')
+    .matches(/[A-Z]/).withMessage('New password must contain at least one uppercase letter.')
+    .matches(/[a-z]/).withMessage('New password must contain at least one lowercase letter.')
+    .matches(/[0-9]/).withMessage('New password must contain at least one number.')
+    .matches(/[^A-Za-z0-9]/).withMessage('New password must contain at least one special character.'),
+
+  body('confirmPassword')
+    .notEmpty().withMessage('Confirm password is required.')
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error('Passwords do not match.');
+      }
+      return true;
+    }),
+
+  handleValidationErrors,
+];
+
+module.exports = { signupValidators, loginValidators, changePasswordValidators };

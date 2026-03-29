@@ -7,6 +7,7 @@ const { auditLogger } = require('../../middlewares/audit.middleware');
 const {
   signupValidators,
   loginValidators,
+  changePasswordValidators,
 } = require('../../middlewares/validate.middleware');
 
 const router = express.Router();
@@ -15,9 +16,20 @@ const router = express.Router();
    Rate limiter — 10 requests per 15 minutes per IP
 ───────────────────────────────────────────────────────── */
 const authLimiter = rateLimit({
-  windowMs:        15 * 60 * 1000, // 15 minutes
+  windowMs:        15 * 60 * 1000,
   max:             10,
   message:         { success: false, message: 'Too many attempts. Try after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders:   false,
+});
+
+/* ─────────────────────────────────────────────────────────
+   Change-password limiter — 5 per 15 minutes per IP
+───────────────────────────────────────────────────────── */
+const changePasswordLimiter = rateLimit({
+  windowMs:        15 * 60 * 1000,
+  max:             5,
+  message:         { success: false, message: 'Too many password change attempts. Try again later.' },
   standardHeaders: true,
   legacyHeaders:   false,
 });
@@ -38,6 +50,14 @@ router.get(
   verifyToken,
   auditLogger('AUTH_ME'),
   authController.getMe
+);
+
+router.post(
+  '/change-password',
+  changePasswordLimiter,
+  verifyToken,
+  changePasswordValidators,
+  authController.changePassword
 );
 
 module.exports = router;
