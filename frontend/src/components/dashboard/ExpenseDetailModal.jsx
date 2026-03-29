@@ -81,7 +81,7 @@ export default function ExpenseDetailModal({ expenseId, isOpen, onClose, onRefre
                   </h3>
                   {expense.receiptUrl && (
                     <a 
-                      href={`${API_BASE}${expense.receiptUrl}`} 
+                      href={expense.receiptUrl.startsWith('http') ? expense.receiptUrl : `${API_BASE}${expense.receiptUrl.startsWith('/') ? '' : '/'}${expense.receiptUrl}`} 
                       target="_blank" 
                       rel="noreferrer"
                       className="p-2 bg-white rounded-xl shadow-sm text-slate-400 hover:text-indigo-600 transition-colors"
@@ -100,9 +100,10 @@ export default function ExpenseDetailModal({ expenseId, isOpen, onClose, onRefre
                       </div>
                     ) : (
                       <img 
-                        src={`${API_BASE}${expense.receiptUrl}`} 
+                        src={expense.receiptUrl.startsWith('http') ? expense.receiptUrl : `${API_BASE}${expense.receiptUrl.startsWith('/') ? '' : '/'}${expense.receiptUrl}`} 
                         alt="Receipt" 
                         className="w-full h-full object-contain p-4"
+                        crossOrigin="anonymous"
                       />
                     )
                   ) : (
@@ -134,9 +135,14 @@ export default function ExpenseDetailModal({ expenseId, isOpen, onClose, onRefre
                   <div>
                     <div className="flex items-baseline gap-2 mb-1">
                        <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
-                          {expense.currencySymbol}{expense.amountInCompanyCurrency?.toLocaleString() || '0'}
+                          {expense.currencyCode === 'USD' 
+                            ? `₹${(expense.amount * 83.5).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
+                            : `${expense.currencySymbol || '₹'}${expense.amountInCompanyCurrency?.toLocaleString() || expense.amount?.toLocaleString() || '0'}`
+                          }
                        </h2>
-                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Total (HQ)</p>
+                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">
+                         {expense.currencyCode === 'USD' ? 'Total (Converted to INR)' : 'Total'}
+                       </p>
                     </div>
                     <div className="flex items-center gap-2 mb-4">
                        <p className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">

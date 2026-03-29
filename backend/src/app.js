@@ -19,7 +19,7 @@ const app = express();
 /* ─────────────────────────────────────────────────────────
    Security headers
 ───────────────────────────────────────────────────────── */
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
 /* ─────────────────────────────────────────────────────────
    CORS — only allow the configured client origin
