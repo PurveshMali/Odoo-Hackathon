@@ -3,13 +3,13 @@ import { User, Mail, Shield, Clock, Key, Eye, EyeOff, CheckCircle, Loader2 } fro
 import { authApi } from '../../services/api';
 
 const InfoRow = ({ icon: Icon, label, value }) => (
-  <div className="flex items-center gap-3 py-3 border-b border-slate-100 last:border-0">
-    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
-      <Icon className="w-4 h-4" />
+  <div className="flex items-center gap-[12px] py-[12px] border-b border-border-default last:border-0 hover:bg-[#FAFAF8] -mx-[24px] px-[24px] transition-none">
+    <div className="w-[16px] h-[16px] text-secondary flex items-center justify-center shrink-0">
+      <Icon className="w-[14px] h-[14px]" />
     </div>
-    <div>
-      <p className="text-xs text-slate-400">{label}</p>
-      <p className="text-sm font-semibold text-slate-700">{value || '—'}</p>
+    <div className="flex-1 flex items-center justify-between">
+      <p className="text-[12px] text-secondary font-medium">{label}</p>
+      <p className="text-[13px] font-medium text-primary uppercase font-mono tracking-[0.02em]">{value || '—'}</p>
     </div>
   </div>
 );
@@ -63,55 +63,59 @@ export default function ProfilePanel() {
     }
   };
 
-  const PasswordField = ({ name, label }) => (
-    <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
-      <div className="relative">
-        <input
-          name={name}
-          type={show[name.replace('Password', '').toLowerCase()] ? 'text' : 'password'}
-          value={cpForm[name]}
-          onChange={handleCpChange}
-          required
-          className="w-full border border-slate-300 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          placeholder="••••••••"
-        />
-        <button
-          type="button"
-          onClick={() => setShow((p) => ({ ...p, [name.replace('Password', '').toLowerCase()]: !p[name.replace('Password', '').toLowerCase()] }))}
-          className="absolute inset-y-0 right-2 flex items-center text-slate-400 hover:text-slate-600"
-        >
-          {show[name.replace('Password', '').toLowerCase()] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-        </button>
+  const renderPasswordField = (name, label) => {
+    const sectionName = name.replace('Password', '').toLowerCase();
+    const isShow = show[sectionName];
+    return (
+      <div>
+        <label className="block text-[12px] text-secondary font-medium mb-[4px]">{label}</label>
+        <div className="relative">
+          <input
+            name={name}
+            type={isShow ? 'text' : 'password'}
+            value={cpForm[name]}
+            onChange={handleCpChange}
+            required
+            className="w-full h-[40px] border border-border-default rounded-[6px] px-[12px] bg-surface text-[13px] text-primary outline-none placeholder:text-muted focus:border-primary transition-none"
+            placeholder="••••••••"
+          />
+          <button
+            type="button"
+            onClick={() => setShow((p) => ({ ...p, [sectionName]: !p[sectionName] }))}
+            className="absolute inset-y-0 right-[12px] flex items-center text-muted hover:text-primary transition-none"
+          >
+            {isShow ? <EyeOff className="w-[14px] h-[14px]" /> : <Eye className="w-[14px] h-[14px]" />}
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-[24px] max-w-2xl pb-[64px]">
       <div>
-        <h1 className="text-xl font-bold text-slate-800">My Profile</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Your account details and security settings.</p>
+        <h1 className="text-[28px] font-medium tracking-[-0.01em] text-primary">My Profile</h1>
+        <p className="text-[13px] text-secondary mt-1">Your account details and security settings.</p>
       </div>
 
       {/* Profile card */}
-      <div className="bg-white border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-surface border border-border-default rounded-[6px] overflow-hidden">
         {/* Avatar header */}
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 px-6 py-8 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-2xl uppercase border-2 border-white/30">
+        <div className="bg-page px-[24px] py-[24px] flex items-start gap-[16px] border-b border-border-default">
+          <div className="w-[64px] h-[64px] rounded-[6px] bg-[#222222] text-sidebar-muted flex items-center justify-center font-mono text-[24px] uppercase shrink-0">
             {profile?.name?.charAt(0) || '?'}
           </div>
           <div>
-            <h2 className="text-white font-bold text-lg">{loading ? 'Loading…' : profile?.name}</h2>
-            <p className="text-indigo-200 text-sm">{profile?.email}</p>
-            <span className="inline-block mt-1 px-2 py-0.5 bg-white/20 text-white text-xs rounded-full capitalize border border-white/30">
+            <h2 className="text-primary font-medium text-[16px]">{loading ? 'Loading…' : profile?.name}</h2>
+            <p className="text-secondary text-[13px] mt-[2px]">{profile?.email}</p>
+            <span className="inline-block mt-[12px] px-[6px] py-[2px] bg-surface border border-border-default text-primary text-[11px] font-mono tracking-[0.03em] rounded-[4px] uppercase">
               {profile?.role}
             </span>
           </div>
         </div>
 
         {/* Info rows */}
-        <div className="px-6">
+        <div className="px-[24px] py-[8px]">
           {profile && (
             <>
               <InfoRow icon={Mail}   label="Email"       value={profile.email} />
@@ -121,36 +125,35 @@ export default function ProfilePanel() {
               <InfoRow icon={Clock}  label="Member Since" value={fmt(profile.createdAt)} />
             </>
           )}
-          {loading && <p className="py-6 text-sm text-slate-400 text-center">Loading…</p>}
+          {loading && <p className="py-[24px] text-[13px] text-muted text-center">Loading profile details...</p>}
         </div>
       </div>
 
       {/* Change Password card */}
-      <div className="bg-white border border-slate-200/70 rounded-2xl shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">
-            <Key className="w-4 h-4" />
-          </div>
-          <h2 className="text-base font-semibold text-slate-800">Change Password</h2>
+      <div className="bg-surface border border-border-default rounded-[6px]">
+        <div className="px-[24px] py-[16px] border-b border-border-default flex items-center gap-[8px]">
+          <Key className="w-[14px] h-[14px] text-secondary" />
+          <h2 className="text-[14px] font-medium text-primary">Change Password</h2>
         </div>
 
-        <form onSubmit={handleCpSubmit} className="px-6 py-5 space-y-4">
-          {cpError   && <div className="bg-red-50 border-l-4 border-red-500 rounded p-3 text-sm text-red-700">{cpError}</div>}
+        <form onSubmit={handleCpSubmit} className="px-[24px] py-[24px] space-y-[16px]">
+          {cpError   && <div className="bg-white border border-danger text-danger rounded-[4px] px-[12px] py-[8px] text-[13px]">{cpError}</div>}
           {cpSuccess && (
-            <div className="bg-emerald-50 border-l-4 border-emerald-500 rounded p-3 text-sm text-emerald-700 flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" /> Password changed successfully!
+            <div className="bg-white border border-success text-success rounded-[4px] px-[12px] py-[8px] text-[13px] flex items-center gap-[8px]">
+              <CheckCircle className="w-[14px] h-[14px]" /> Password changed successfully!
             </div>
           )}
 
-          <PasswordField name="currentPassword" label="Current Password" />
-          <PasswordField name="newPassword"     label="New Password (min. 8 chars, upper, lower, number, special)" />
-          <PasswordField name="confirmPassword" label="Confirm New Password" />
+          {renderPasswordField('currentPassword', 'Current Password')}
+          {renderPasswordField('newPassword', 'New Password (min. 8 chars, upper, lower, number, special)')}
+          {renderPasswordField('confirmPassword', 'Confirm New Password')}
 
-          <div className="pt-1">
+          <div className="pt-[8px]">
             <button type="submit" disabled={cpLoading}
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+              className="inline-flex items-center justify-center gap-[8px] px-[16px] h-[36px] text-[13px] font-medium text-white bg-primary rounded-[4px] hover:bg-[#2A2A2A] disabled:opacity-60 transition-none"
             >
-              {cpLoading ? <><Loader2 className="w-4 h-4 animate-spin" />Changing…</> : 'Update Password'}
+              {cpLoading ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : null}
+              {cpLoading ? 'Changing...' : 'Update Password'}
             </button>
           </div>
         </form>
