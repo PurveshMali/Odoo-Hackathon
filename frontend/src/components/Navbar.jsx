@@ -1,10 +1,20 @@
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from '../constants/api';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user')) || {};
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include' // Make sure cookie is sent to be cleared properly
+      });
+    } catch (err) {
+      console.error('Logout request failed', err);
+    }
+    
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');

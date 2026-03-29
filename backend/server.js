@@ -3,7 +3,7 @@ require('dotenv').config();
 const app                  = require('./src/app');
 const { testConnection }   = require('./src/config/db');
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   // Verify DB connection before accepting traffic

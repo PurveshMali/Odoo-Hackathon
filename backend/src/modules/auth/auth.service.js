@@ -178,9 +178,10 @@ async function login({ email, password, ipAddress, userAgent }) {
       'users.role',
       'users.is_active',
       'users.last_login_at',
-      'companies.name        as company_name',
-      'companies.currency_code   as currency_code',
-      'companies.currency_symbol as currency_symbol',
+      'users.must_change_password',
+      'companies.name             as company_name',
+      'companies.currency_code    as currency_code',
+      'companies.currency_symbol  as currency_symbol',
     )
     .first();
 
@@ -214,12 +215,14 @@ async function login({ email, password, ipAddress, userAgent }) {
   return {
     accessToken,
     rawRefreshToken,
+    mustChangePassword: user.must_change_password || false, // ← frontend reads this to force /change-password redirect
     user: {
-      id:          user.id,
-      name:        user.name,
-      email:       user.email,
-      role:        user.role,
-      lastLoginAt: user.last_login_at,
+      id:                user.id,
+      name:              user.name,
+      email:             user.email,
+      role:              user.role,
+      mustChangePassword: user.must_change_password || false,
+      lastLoginAt:       user.last_login_at,
       company: {
         id:             user.company_id,
         name:           user.company_name,
@@ -228,6 +231,73 @@ async function login({ email, password, ipAddress, userAgent }) {
       },
     },
   };
+}
+
+/**
+ * changePassword:
+ * 1. Fetch user with password_hash
+ * 2. Verify current password
+ * 3. Ensure new password differs from current
+ * 4. Hash new password
+ * 5. In transaction: update password + revoke other refresh tokens
+ * 6. Send confirmation email (fire-and-forget)
+ */
+async function changePassword(userId, currentPassword, newPassword, currentTokenHash) {
+  const { sendPasswordChangedEmail } = require('../../config/email');
+
+  // 1. Fetch user
+  const user = await db('users')
+    .where({ id: userId })
+    .select('id', 'name', 'email', 'password_hash', 'must_change_password')
+    .first();
+
+  if (!user) {
+    const err = new Error('User not found.');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // 2. Verify current password
+  const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+  if (!isMatch) {
+    const err = new Error('Current password is incorrect.');
+    err.statusCode = 401;
+    throw err;
+  }
+
+  // 3. Ensure new password is different
+  const isSame = await bcrypt.compare(newPassword, user.password_hash);
+  if (isSame) {
+    const err = new Error('New password must be different from your current password.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // 4. Hash new password
+  const newHash = await bcrypt.hash(newPassword, 12);
+
+  // 5. DB transaction — update password, revoke all OTHER sessions
+  await db.transaction(async (trx) => {
+    await trx('users')
+      .where({ id: userId })
+      .update({
+        password_hash:        newHash,
+        must_change_password: false,
+      });
+
+    // Revoke all refresh tokens except the current one (user stays logged in)
+    const revokeQuery = trx('refresh_tokens').where({ user_id: userId });
+    if (currentTokenHash) {
+      revokeQuery.andWhereNot({ token_hash: currentTokenHash });
+    }
+    await revokeQuery.update({ is_revoked: true });
+  });
+
+  // 6. Send confirmation email — fire & forget (do NOT await, don't block response)
+  sendPasswordChangedEmail({ toEmail: user.email, userName: user.name })
+    .catch((err) => console.error('[EMAIL] Failed to send password-changed email:', err.message));
+
+  return { message: 'Password changed successfully.' };
 }
 
 /**
@@ -368,4 +438,5 @@ async function getMe(userId) {
   };
 }
 
-module.exports = { signup, login, refreshToken, logout, getMe };
+module.exports = { signup, login, changePassword, refreshToken, logout, getMe };
+

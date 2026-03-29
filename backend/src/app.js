@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 
 const { sendError } = require('./utils/apiResponse');
 const authRoutes    = require('./modules/auth/auth.routes');
+const usersRoutes   = require('./modules/users/users.routes');
 
 const app = express();
 
@@ -40,7 +41,8 @@ app.get('/health', (req, res) => {
 /* ─────────────────────────────────────────────────────────
    API routes
 ───────────────────────────────────────────────────────── */
-app.use('/api/auth', authRoutes);
+app.use('/api/auth',  authRoutes);
+app.use('/api/users', usersRoutes);
 
 /* ─────────────────────────────────────────────────────────
    404 handler

@@ -51,9 +51,34 @@ const login = async (req, res, next) => {
     res.cookie('refreshToken', result.rawRefreshToken, REFRESH_COOKIE_OPTIONS);
 
     return sendSuccess(res, 'Login successful', {
-      accessToken: result.accessToken,
-      user:        result.user,
+      accessToken:        result.accessToken,
+      mustChangePassword: result.mustChangePassword, // ← frontend redirects to /change-password if true
+      user:               result.user,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/* ─────────────────────────────────────────────────────────
+   POST /api/auth/change-password  (protected)
+───────────────────────────────────────────────────────── */
+const changePassword = async (req, res, next) => {
+  try {
+    const userId          = req.user.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    // Pass current refresh token hash so that session can remain alive
+    // while all OTHER device sessions are revoked
+    const crypto           = require('crypto');
+    const rawRefreshToken  = req.cookies?.refreshToken;
+    const currentTokenHash = rawRefreshToken
+      ? crypto.createHash('sha256').update(rawRefreshToken).digest('hex')
+      : null;
+
+    await authService.changePassword(userId, currentPassword, newPassword, currentTokenHash);
+
+    return sendSuccess(res, 'Password changed successfully', null);
   } catch (err) {
     next(err);
   }
@@ -115,4 +140,5 @@ const getMe = async (req, res, next) => {
   }
 };
 
-module.exports = { signup, login, refresh, logout, getMe };
+module.exports = { signup, login, changePassword, refresh, logout, getMe };
+
